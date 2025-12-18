@@ -11,8 +11,13 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import {
-  Calculator,
   TrendingUp,
+  AlertCircle,
+  DollarSign,
+  Calendar,
+  Percent,
+  Target,
+  Calculator,
   CheckCircle,
   AlertTriangle,
   XCircle,
@@ -21,31 +26,111 @@ import {
 } from 'lucide-react';
 
 export default function RetirementCalculator() {
-  const [showAdvanced, setShowAdvanced] = useState(false);
   const [showResults, setShowResults] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
-  /* ⚠️ LOGIC NOT TOUCHED */
-  const calculations = {
-    totalCorpus: 10700000,
-    requiredCorpus: 83400000,
-    successRate: 64,
-    chartData: [],
-  };
+  const [inputs, setInputs] = useState({
+    currentAge: 30,
+    retirementAge: 60,
+    lifeExpectancy: 85,
+    currentSavings: 100000,
+    monthlyContribution: 2000,
+    expectedReturn: 12,
+    inflationRate: 6,
+    monthlyExpenseToday: 50000,
+    expenseInflation: 7,
+  });
 
-  const gap = calculations.requiredCorpus - calculations.totalCorpus;
+  const [advanced, setAdvanced] = useState({
+    preRetirementReturn: 12,
+    postRetirementReturn: 8,
+    emergencyYears: 2,
+    lifestyleChange: 0.8,
+    medicalInflation: 10,
+    medicalExpenses: 10000,
+  });
+
+  const handleInputChange = (field, value) =>
+    setInputs((p) => ({ ...p, [field]: Number(value) }));
+
+  const handleAdvancedChange = (field, value) =>
+    setAdvanced((p) => ({ ...p, [field]: Number(value) }));
+
+  /* ===== LOGIC (UNCHANGED) ===== */
+  const yearsToRetirement = inputs.retirementAge - inputs.currentAge;
+  const yearsInRetirement = inputs.lifeExpectancy - inputs.retirementAge;
+
+  const monthlyRate = advanced.preRetirementReturn / 100 / 12;
+  const months = yearsToRetirement * 12;
+
+  const fvCurrentSavings =
+    inputs.currentSavings * Math.pow(1 + monthlyRate, months);
+
+  const fvContributions =
+    inputs.monthlyContribution *
+    ((Math.pow(1 + monthlyRate, months) - 1) / monthlyRate) *
+    (1 + monthlyRate);
+
+  const totalCorpus = fvCurrentSavings + fvContributions;
+
+  const inflatedMonthlyExpense =
+    inputs.monthlyExpenseToday *
+    Math.pow(1 + inputs.expenseInflation / 100, yearsToRetirement) *
+    advanced.lifestyleChange;
+
+  const inflatedMedicalExpense =
+    advanced.medicalExpenses *
+    Math.pow(1 + advanced.medicalInflation / 100, yearsToRetirement);
+
+  const totalMonthlyExpense =
+    inflatedMonthlyExpense + inflatedMedicalExpense / 12;
+
+  const annualExpense = totalMonthlyExpense * 12;
+
+  const realReturn =
+    (1 + advanced.postRetirementReturn / 100) /
+      (1 + inputs.inflationRate / 100) -
+    1;
+
+  const requiredCorpus =
+    annualExpense *
+    ((1 - Math.pow(1 + realReturn, -yearsInRetirement)) / realReturn);
+
+  const gap = requiredCorpus - totalCorpus;
+
+  const chartData = [];
+  let runningCorpus = inputs.currentSavings;
+
+  for (let age = inputs.currentAge; age <= inputs.lifeExpectancy; age++) {
+    if (age < inputs.retirementAge) {
+      runningCorpus =
+        (runningCorpus + inputs.monthlyContribution * 12) *
+        (1 + advanced.preRetirementReturn / 100);
+    } else {
+      runningCorpus =
+        runningCorpus * (1 + advanced.postRetirementReturn / 100) -
+        annualExpense;
+    }
+
+    chartData.push({
+      age,
+      corpus: Math.max(0, Math.round(runningCorpus)),
+    });
+  }
 
   const status =
     gap <= 0
       ? { label: 'On Track', color: 'emerald', icon: CheckCircle }
-      : gap < calculations.totalCorpus * 0.2
+      : gap < totalCorpus * 0.2
       ? { label: 'Almost There', color: 'amber', icon: AlertTriangle }
       : { label: 'Action Needed', color: 'rose', icon: XCircle };
 
   const StatusIcon = status.icon;
 
+  /* ===== UI ===== */
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-12 px-4">
-      <div className="max-w-7xl mx-auto space-y-10">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
+      <div className="max-w-7xl mx-auto space-y-8">
 
         {/* Header */}
         <div className="text-center animate-fade-in">
@@ -53,73 +138,83 @@ export default function RetirementCalculator() {
             Retirement Planner
           </h1>
           <p className="text-slate-600 mt-2">
-            Plan confidently with realistic projections & simulations
+            Plan confidently with realistic projections
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-8 items-start">
+        <div className="grid lg:grid-cols-2 gap-8">
 
           {/* LEFT */}
           <div className="space-y-6">
+            <div className="bg-white rounded-2xl shadow-lg p-6 space-y-4 transition hover:shadow-xl">
+              <h2 className="font-semibold flex items-center gap-2">
+                <Target className="w-5 h-5 text-blue-600" />
+                Basic Details
+              </h2>
 
-            {/* Placeholder Inputs Card */}
-            <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition">
-              <h2 className="font-semibold mb-4">Basic Details</h2>
-              <div className="h-32 bg-slate-100 rounded-lg flex items-center justify-center text-slate-500">
-                (Inputs unchanged)
-              </div>
+              {Object.entries(inputs).map(([key, val]) => (
+                <div key={key}>
+                  <label className="text-sm text-slate-600 capitalize">
+                    {key.replace(/([A-Z])/g, ' $1')}
+                  </label>
+                  <input
+                    type="number"
+                    value={val}
+                    onChange={(e) =>
+                      handleInputChange(key, e.target.value)
+                    }
+                    className="w-full mt-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              ))}
             </div>
 
-            {/* Advanced Toggle */}
-            <div className="bg-white rounded-2xl shadow-lg overflow-hidden transition">
+            {/* Advanced */}
+            <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
               <button
                 onClick={() => setShowAdvanced(!showAdvanced)}
-                className="w-full px-6 py-4 flex justify-between items-center hover:bg-slate-50 transition"
+                className="w-full px-6 py-4 flex justify-between items-center"
               >
                 <span className="font-semibold">Advanced Settings</span>
                 {showAdvanced ? <ChevronUp /> : <ChevronDown />}
               </button>
 
-              <div
-                className={`px-6 overflow-hidden transition-all duration-300 ${
-                  showAdvanced ? 'max-h-96 pb-6' : 'max-h-0'
-                }`}
-              >
-                <div className="h-24 bg-slate-100 rounded-lg flex items-center justify-center text-slate-500">
-                  (Advanced inputs unchanged)
+              {showAdvanced && (
+                <div className="px-6 pb-6 space-y-3 animate-fade-in">
+                  {Object.entries(advanced).map(([key, val]) => (
+                    <div key={key}>
+                      <label className="text-sm text-slate-600 capitalize">
+                        {key.replace(/([A-Z])/g, ' $1')}
+                      </label>
+                      <input
+                        type="number"
+                        value={val}
+                        onChange={(e) =>
+                          handleAdvancedChange(key, e.target.value)
+                        }
+                        className="w-full mt-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  ))}
                 </div>
-              </div>
+              )}
             </div>
 
-            {/* CTA */}
             <button
               onClick={() => setShowResults(true)}
-              className="w-full bg-blue-600 hover:bg-blue-700 active:scale-95 text-white py-4 rounded-xl shadow-lg flex items-center justify-center gap-3 text-lg font-semibold transition-all"
+              className="w-full bg-blue-600 hover:bg-blue-700 active:scale-95 text-white py-4 rounded-xl shadow-lg flex items-center justify-center gap-3 text-lg font-semibold transition"
             >
               <Calculator />
-              Calculate My Retirement Plan
+              Calculate Retirement
             </button>
           </div>
 
           {/* RIGHT */}
           <div className="space-y-6">
-
-            {!showResults ? (
-              <div className="bg-white rounded-2xl shadow-lg p-10 text-center animate-fade-up">
-                <TrendingUp className="w-12 h-12 mx-auto text-blue-600 mb-4" />
-                <h3 className="text-xl font-semibold mb-2">
-                  Ready to Plan Your Future?
-                </h3>
-                <p className="text-slate-600">
-                  Enter details and calculate to see your retirement readiness.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-6 animate-fade-up">
-
-                {/* STATUS CARD */}
+            {showResults && (
+              <>
                 <div
-                  className={`bg-white rounded-2xl shadow-lg p-6 border-l-8 border-${status.color}-500`}
+                  className={`bg-white rounded-2xl shadow-lg p-6 border-l-8 border-${status.color}-500 animate-fade-up`}
                 >
                   <div className="flex items-center gap-3">
                     <StatusIcon className={`text-${status.color}-500`} />
@@ -132,28 +227,26 @@ export default function RetirementCalculator() {
                   </div>
                 </div>
 
-                {/* RESULTS */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-white rounded-xl shadow p-5 hover:shadow-lg transition">
+                <div className="grid grid-cols-2 gap-4 animate-fade-up">
+                  <div className="bg-white rounded-xl shadow p-5">
                     <div className="text-sm text-slate-500">You’ll Have</div>
                     <div className="text-2xl font-bold">
-                      ₹{(calculations.totalCorpus / 10000000).toFixed(2)} Cr
+                      ₹{(totalCorpus / 10000000).toFixed(2)} Cr
                     </div>
                   </div>
-                  <div className="bg-white rounded-xl shadow p-5 hover:shadow-lg transition">
+                  <div className="bg-white rounded-xl shadow p-5">
                     <div className="text-sm text-slate-500">You’ll Need</div>
                     <div className="text-2xl font-bold">
-                      ₹{(calculations.requiredCorpus / 10000000).toFixed(2)} Cr
+                      ₹{(requiredCorpus / 10000000).toFixed(2)} Cr
                     </div>
                   </div>
                 </div>
 
-                {/* CHART */}
                 <div className="bg-white rounded-2xl shadow-lg p-4 animate-fade-in">
-                  <ResponsiveContainer width="100%" height={220}>
-                    <AreaChart data={calculations.chartData}>
+                  <ResponsiveContainer width="100%" height={250}>
+                    <AreaChart data={chartData}>
                       <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis />
+                      <XAxis dataKey="age" />
                       <YAxis />
                       <Tooltip />
                       <Area
@@ -165,17 +258,12 @@ export default function RetirementCalculator() {
                     </AreaChart>
                   </ResponsiveContainer>
                 </div>
-              </div>
+              </>
             )}
           </div>
         </div>
-
-        <p className="text-center text-sm text-slate-500">
-          * Estimates only. Consult a certified financial planner.
-        </p>
       </div>
 
-      {/* Animations */}
       <style jsx>{`
         .animate-fade-in {
           animation: fadeIn 0.6s ease-out;
