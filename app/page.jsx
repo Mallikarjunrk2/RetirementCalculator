@@ -1,168 +1,167 @@
 import Link from "next/link";
 
-export default function Home() {
+export default function HomePage() {
   return (
-    <main className="min-h-screen bg-slate-50">
-
+    <main className="bg-white">
       {/* HERO */}
-      <section className="max-w-6xl mx-auto px-6 pt-20 pb-16 text-center">
-        <h1 className="text-4xl md:text-5xl font-bold text-slate-900 leading-tight">
-          Retirement Calculator for India
-        </h1>
+      <section className="relative overflow-hidden">
+        <div className="mx-auto max-w-7xl px-6 py-24 grid grid-cols-1 lg:grid-cols-2 gap-14 items-center">
+          {/* Left */}
+          <div>
+            <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-gray-900">
+              Retirement Calculator for India
+            </h1>
 
-        <p className="mt-5 text-lg text-slate-700 max-w-3xl mx-auto">
-          Use this free retirement calculator to estimate how much money you will
-          need after retirement, how your savings grow before retirement, and how
-          long your retirement corpus may last considering inflation, expenses,
-          and realistic returns.
-        </p>
+            <p className="mt-6 text-lg text-gray-600 leading-relaxed max-w-xl">
+              Use this free retirement calculator to estimate how much money you
+              will need after retirement, how your savings grow before
+              retirement, and how long your retirement corpus may last
+              considering inflation, expenses, and realistic returns.
+            </p>
 
-        <div className="mt-10 flex justify-center">
-          <Link
-            href="/retirement-calculator"
-            className="px-10 py-4 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 transition"
-          >
-            Start Retirement Planning →
-          </Link>
+            <div className="mt-8 flex items-center gap-4">
+              <Link
+                href="/retirement-calculator"
+                className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-6 py-3 text-base font-semibold text-white shadow hover:bg-blue-700 transition"
+              >
+                Start Retirement Planning →
+              </Link>
+            </div>
+
+            <p className="mt-4 text-sm text-gray-500">
+              Free • No login required • Built for Indian investors
+            </p>
+          </div>
+
+          {/* Right visual block */}
+          <div className="relative">
+            <div className="rounded-3xl bg-gradient-to-br from-blue-50 to-indigo-50 p-8 shadow-sm">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="rounded-xl bg-white p-5 shadow-sm">
+                  <h3 className="font-semibold text-gray-900">
+                    Inflation-aware planning
+                  </h3>
+                  <p className="mt-2 text-sm text-gray-600">
+                    Accounts for rising costs and realistic expense growth.
+                  </p>
+                </div>
+
+                <div className="rounded-xl bg-white p-5 shadow-sm">
+                  <h3 className="font-semibold text-gray-900">
+                    Pre & post retirement
+                  </h3>
+                  <p className="mt-2 text-sm text-gray-600">
+                    See how your corpus grows and gets utilized over time.
+                  </p>
+                </div>
+
+                <div className="rounded-xl bg-white p-5 shadow-sm">
+                  <h3 className="font-semibold text-gray-900">
+                    No product pushing
+                  </h3>
+                  <p className="mt-2 text-sm text-gray-600">
+                    Pure planning tool, not investment advice or sales.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-
-        <p className="mt-4 text-sm text-slate-500">
-          Free • No login required • Built for Indian investors
-        </p>
       </section>
 
-      {/* FEATURES */}
-      <section className="max-w-6xl mx-auto px-6 py-14 grid md:grid-cols-3 gap-8">
-        <Feature
-          title="Inflation-adjusted retirement planning"
-          desc="This retirement calculator considers inflation, lifestyle changes, and rising medical costs to give a more realistic retirement estimate."
-        />
-        <Feature
-          title="Pre and post retirement projections"
-          desc="Visualize how your retirement corpus grows before retirement and how it gets utilized after retirement."
-        />
-        <Feature
-          title="No product pushing"
-          desc="This is a calculation and planning tool, not an investment recommendation or sales platform."
-        />
-      </section>
-
-      {/* LONG SEO CONTENT */}
-      <section className="bg-white border-t border-slate-200">
-        <div className="max-w-6xl mx-auto px-6 py-16 space-y-6 text-slate-700 leading-relaxed">
-          <h2 className="text-3xl font-semibold text-slate-900">
-            Retirement Planning Calculator – Understand Your Future Financial Needs
+      {/* CONTENT SECTION */}
+      <section className="border-t bg-gray-50">
+        <div className="mx-auto max-w-5xl px-6 py-20">
+          <h2 className="text-3xl font-bold text-gray-900">
+            Retirement Planning Calculator – Understand Your Future Financial
+            Needs
           </h2>
 
-          <p>
-            Retirement planning is one of the most important financial decisions
-            you will make in your life. A retirement calculator helps you estimate
-            the amount of money you may need after retirement based on your current
-            age, retirement age, life expectancy, monthly expenses, inflation rate,
-            expected returns, and medical costs.
+          <p className="mt-6 text-gray-700 leading-relaxed">
+            Retirement planning is one of the most important financial
+            decisions you will make in your life. A retirement calculator
+            helps you estimate the amount of money you may need after
+            retirement based on your current age, retirement age, life
+            expectancy, monthly expenses, inflation rate, and expected
+            investment returns.
           </p>
 
-          <p>
-            Many people underestimate how inflation affects their retirement
-            expenses. What costs ₹50,000 per month today may cost significantly
-            more after 20 or 30 years. This retirement planning calculator for
-            India adjusts your future expenses using realistic inflation
-            assumptions so you can plan with clarity instead of guesswork.
-          </p>
-
-          <p>
-            This calculator is useful for salaried individuals, self-employed
-            professionals, and business owners who want to understand whether
-            their current savings and monthly investments are sufficient to
-            support their retirement lifestyle. It shows whether you are on
-            track, almost there, or need to take corrective action.
-          </p>
-
-          <p>
-            Unlike basic retirement calculators, this tool also considers
-            post-retirement returns and corpus depletion. This helps you
-            understand how long your retirement savings may last and whether you
-            need to increase investments, reduce expenses, or delay retirement.
+          <p className="mt-4 text-gray-700 leading-relaxed">
+            This retirement calculator for India is designed to give realistic
+            projections by factoring in inflation, lifestyle adjustments,
+            medical costs, and both pre-retirement and post-retirement returns.
+            It helps you understand whether your current savings and monthly
+            investments are sufficient to maintain your desired lifestyle
+            after retirement.
           </p>
         </div>
       </section>
 
-      {/* FAQ SECTION */}
-      <section className="max-w-6xl mx-auto px-6 py-20">
-        <h2 className="text-3xl font-semibold text-slate-900 text-center">
-          Frequently Asked Questions
-        </h2>
+      {/* FAQ */}
+      <section className="bg-white border-t">
+        <div className="mx-auto max-w-5xl px-6 py-20">
+          <h2 className="text-3xl font-bold text-gray-900">
+            Frequently Asked Questions
+          </h2>
 
-        <div className="mt-12 space-y-8 max-w-4xl mx-auto">
-          <FAQ
-            q="What is a retirement calculator?"
-            a="A retirement calculator is a financial planning tool that helps you estimate how much money you may need after retirement based on your expenses, savings, inflation, and expected investment returns."
-          />
-          <FAQ
-            q="How accurate is this retirement calculator?"
-            a="This calculator provides estimates based on assumptions such as inflation rate, returns, and expenses. Actual results may vary, but it offers a realistic framework for retirement planning."
-          />
-          <FAQ
-            q="Does this retirement calculator consider inflation?"
-            a="Yes. The calculator adjusts future expenses for inflation, including lifestyle inflation and medical inflation, to give a more accurate retirement estimate."
-          />
-          <FAQ
-            q="Is this retirement calculator suitable for Indian investors?"
-            a="Yes. This retirement calculator is designed keeping Indian expenses, inflation patterns, and retirement realities in mind."
-          />
-          <FAQ
-            q="Does this tool recommend mutual funds or investments?"
-            a="No. This tool does not recommend or sell any financial products. It is purely for retirement planning and awareness."
-          />
-          <FAQ
-            q="Can I rely only on this calculator for retirement planning?"
-            a="This calculator is a starting point. For personalized advice, it is recommended to consult a certified financial planner."
-          />
+          <div className="mt-10 space-y-8">
+            <div>
+              <h3 className="font-semibold text-gray-900">
+                How accurate is this retirement calculator?
+              </h3>
+              <p className="mt-2 text-gray-700">
+                This calculator provides estimates based on the inputs you
+                provide and commonly accepted financial assumptions. Actual
+                outcomes may vary depending on market performance, lifestyle
+                changes, and unforeseen expenses.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="font-semibold text-gray-900">
+                Does this calculator provide investment advice?
+              </h3>
+              <p className="mt-2 text-gray-700">
+                No. This is a planning and estimation tool only. It does not
+                recommend specific investment products or strategies.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="font-semibold text-gray-900">
+                Can I rely on this calculator for final retirement decisions?
+              </h3>
+              <p className="mt-2 text-gray-700">
+                The calculator is meant to help you understand your retirement
+                readiness. For personalized advice, you should consult a
+                certified financial planner.
+              </p>
+            </div>
+          </div>
         </div>
       </section>
 
       {/* FINAL CTA */}
-      <section className="bg-slate-100 py-20 text-center">
-        <h2 className="text-3xl font-bold text-slate-900">
-          Ready to calculate your retirement corpus?
-        </h2>
-        <p className="mt-4 text-slate-600">
-          Understand where you stand and what changes you may need to make.
-        </p>
+      <section className="bg-gradient-to-br from-blue-600 to-indigo-600">
+        <div className="mx-auto max-w-6xl px-6 py-20 text-center">
+          <h2 className="text-3xl font-bold text-white">
+            Start planning your retirement with confidence
+          </h2>
+          <p className="mt-4 text-blue-100 max-w-2xl mx-auto">
+            Understand your future financial needs clearly and take informed
+            decisions today.
+          </p>
 
-        <div className="mt-8">
-          <Link
-            href="/retirement-calculator"
-            className="px-10 py-4 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 transition"
-          >
-            Open Retirement Calculator →
-          </Link>
+          <div className="mt-8">
+            <Link
+              href="/retirement-calculator"
+              className="inline-flex items-center justify-center rounded-xl bg-white px-8 py-3 text-base font-semibold text-blue-600 shadow hover:bg-blue-50 transition"
+            >
+              Open Retirement Calculator →
+            </Link>
+          </div>
         </div>
       </section>
-
-      {/* FOOTER */}
-      <footer className="border-t border-slate-200 py-6 text-center text-sm text-slate-500">
-        This retirement calculator provides estimates only. Actual financial
-        outcomes may vary. Please consult a professional for personalized advice.
-      </footer>
     </main>
-  );
-}
-
-function Feature({ title, desc }) {
-  return (
-    <div className="bg-white rounded-2xl p-6 shadow-sm">
-      <h3 className="font-semibold text-slate-900">{title}</h3>
-      <p className="mt-2 text-slate-600 text-sm">{desc}</p>
-    </div>
-  );
-}
-
-function FAQ({ q, a }) {
-  return (
-    <div className="bg-white rounded-2xl p-6 shadow-sm">
-      <h3 className="font-semibold text-slate-900">{q}</h3>
-      <p className="mt-2 text-slate-600 text-sm">{a}</p>
-    </div>
   );
 }
