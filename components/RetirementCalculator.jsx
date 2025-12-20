@@ -1,11 +1,10 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Area, AreaChart } from 'recharts';
-import { TrendingUp, AlertCircle, DollarSign, Calendar, Percent, Target, Calculator, ChevronRight, Info } from 'lucide-react';
+import { TrendingUp, AlertCircle, DollarSign, Calendar, Percent, Target, Calculator, ChevronRight, Info, ShieldCheck } from 'lucide-react';
 
 export default function RetirementCalculator() {
-  // Logic remains identical to your original code
   const [inputs, setInputs] = useState({
     currentAge: 30,
     retirementAge: 60,
@@ -39,7 +38,7 @@ export default function RetirementCalculator() {
     setAdvanced(prev => ({ ...prev, [field]: parseFloat(value) || 0 }));
   };
 
-  // Original calculation logic preserved exactly
+  // Original Logic Preserved from
   const calculateRetirement = () => {
     const yearsToRetirement = inputs.retirementAge - inputs.currentAge;
     const yearsInRetirement = inputs.lifeExpectancy - inputs.retirementAge;
@@ -73,20 +72,35 @@ export default function RetirementCalculator() {
     
     for (let year = 0; year <= inputs.lifeExpectancy - inputs.currentAge; year++) {
       const age = inputs.currentAge + year;
+      
       if (age < inputs.retirementAge) {
         const yearlyContribution = inputs.monthlyContribution * 12;
         currentCorpus = (currentCorpus + yearlyContribution) * (1 + advanced.preRetirementReturn / 100);
-        chartData.push({ age, corpus: Math.round(currentCorpus), phase: 'Accumulation' });
+        
+        chartData.push({
+          age,
+          corpus: Math.round(currentCorpus),
+          withdrawal: 0,
+          phase: 'Accumulation'
+        });
       } else {
         const yearExpense = annualExpense * Math.pow(1 + inputs.inflationRate / 100, age - inputs.retirementAge);
+        
         currentCorpus = currentCorpus * (1 + advanced.postRetirementReturn / 100) - yearExpense;
-        chartData.push({ age, corpus: Math.round(Math.max(0, currentCorpus)), withdrawal: Math.round(yearExpense), phase: 'Withdrawal' });
+        
+        chartData.push({
+          age,
+          corpus: Math.round(Math.max(0, currentCorpus)),
+          withdrawal: Math.round(yearExpense),
+          phase: 'Withdrawal'
+        });
       }
     }
     
-    const successRate = (() => {
+    const runSimulation = () => {
       let successCount = 0;
-      for (let sim = 0; sim < 1000; sim++) {
+      const simulations = 1000;
+      for (let sim = 0; sim < simulations; sim++) {
         let simCorpus = totalCorpus;
         for (let year = 0; year < yearsInRetirement; year++) {
           const randomReturn = (Math.random() - 0.5) * 10 + advanced.postRetirementReturn;
@@ -96,140 +110,220 @@ export default function RetirementCalculator() {
         }
         if (simCorpus > 0) successCount++;
       }
-      return (successCount / 10).toFixed(1);
-    })();
+      return (successCount / simulations * 100).toFixed(1);
+    };
     
-    setCalculations({ totalCorpus, requiredCorpus, gap: Math.round(totalRequired - totalCorpus), monthlyExpenseAtRetirement: Math.round(totalMonthlyExpense), chartData, successRate, yearsToRetirement, emergencyFund: Math.round(emergencyFund) });
+    const successRate = runSimulation();
+    
+    setCalculations({
+      totalCorpus: Math.round(totalCorpus),
+      requiredCorpus: Math.round(totalRequired),
+      gap: Math.round(totalRequired - totalCorpus),
+      monthlyExpenseAtRetirement: Math.round(totalMonthlyExpense),
+      chartData,
+      successRate,
+      yearsToRetirement,
+      yearsInRetirement,
+      emergencyFund: Math.round(emergencyFund),
+    });
+
     setShowResults(true);
     setShowPopup(true);
-    setTimeout(() => setShowPopup(false), 4000);
-    setTimeout(() => document.getElementById('results-section')?.scrollIntoView({ behavior: 'smooth' }), 500);
+    setTimeout(() => setShowPopup(false), 3000);
+    setTimeout(() => {
+      document.getElementById('results-section')?.scrollIntoView({ behavior: 'smooth' });
+    }, 500);
   };
 
   const getStatusColor = () => {
     if (!calculations) return 'text-slate-600';
-    return calculations.gap <= 0 ? 'text-emerald-500' : 'text-rose-500';
+    if (calculations.gap <= 0) return 'text-emerald-500';
+    if (calculations.gap <= calculations.totalCorpus * 0.2) return 'text-amber-500';
+    return 'text-rose-500';
   };
 
-  // Modern Input Component for consistency
-  const InputGroup = ({ label, value, onChange, type = "number", min, max, step = 1, prefix }) => (
-    <div className="group space-y-2">
-      <label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1">
-        {label}
-      </label>
-      <div className="relative">
-        {prefix && <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-medium">{prefix}</span>}
-        <input
-          type={type}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className={`w-full ${prefix ? 'pl-8' : 'px-4'} py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all outline-none text-slate-700 font-medium`}
-        />
-      </div>
-      {type === "range" && (
-        <input 
-          type="range" min={min} max={max} step={step} value={value} 
-          onChange={(e) => onChange(e.target.value)}
-          className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
-        />
-      )}
-    </div>
-  );
+  const getStatusMessage = () => {
+    if (!calculations) return 'Calculate Now';
+    if (calculations.gap <= 0) return 'On Track! 🎉';
+    if (calculations.gap <= calculations.totalCorpus * 0.2) return 'Almost There';
+    return 'Action Needed';
+  };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 selection:bg-blue-100">
-      {/* Dynamic Background Ornament */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none opacity-40">
+    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 font-sans selection:bg-blue-100 pb-20">
+      {/* Background Ornament */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none opacity-40 z-0">
         <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] rounded-full bg-blue-200 blur-[120px]" />
         <div className="absolute top-[20%] -right-[5%] w-[30%] h-[30%] rounded-full bg-indigo-200 blur-[100px]" />
       </div>
 
-      <div className="relative max-w-7xl mx-auto px-4 py-12 md:px-8">
-        {/* Header Section */}
-        <header className="mb-12 text-center md:text-left flex flex-col md:flex-row md:items-end justify-between gap-6">
-          <div className="space-y-2">
-            <span className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold uppercase tracking-widest">Financial Planning</span>
-            <h1 className="text-4xl md:text-5xl font-black tracking-tight text-slate-900">Retirement <span className="text-blue-600">Architect</span></h1>
-            <p className="text-slate-500 text-lg max-w-lg">Advanced simulations for Indian investors considering real-world inflation.</p>
-          </div>
-          <div className="hidden lg:flex items-center gap-4 text-sm font-medium text-slate-400">
-            <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-emerald-400" /> Monte Carlo Ready</div>
-            <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-blue-400" /> Real-time Projections</div>
-          </div>
-        </header>
-
-        <div className="grid lg:grid-cols-12 gap-8">
-          {/* Controls Panel */}
-          <aside className="lg:col-span-4 space-y-6">
-            <div className="bg-white/80 backdrop-blur-xl rounded-[2rem] p-8 shadow-sm border border-white">
-              <div className="flex items-center gap-3 mb-8 border-b border-slate-100 pb-4">
-                <div className="p-2 bg-blue-600 rounded-lg text-white"><Target size={20} /></div>
-                <h2 className="text-xl font-bold">Core Parameters</h2>
-              </div>
-              
-              <div className="grid gap-6">
-                <InputGroup label="Current Age" value={inputs.currentAge} onChange={(val) => handleInputChange('currentAge', val)} />
-                <InputGroup label="Retirement Age" value={inputs.retirementAge} onChange={(val) => handleInputChange('retirementAge', val)} />
-                <InputGroup label="Monthly SIP" value={inputs.monthlyContribution} prefix="₹" onChange={(val) => handleInputChange('monthlyContribution', val)} />
-                <InputGroup label="Current Corpus" value={inputs.currentSavings} prefix="₹" onChange={(val) => handleInputChange('currentSavings', val)} />
-                <InputGroup label="Monthly Expense Today" value={inputs.monthlyExpenseToday} prefix="₹" onChange={(val) => handleInputChange('monthlyExpenseToday', val)} />
-              </div>
-
-              <button
-                onClick={calculateRetirement}
-                className="w-full mt-10 bg-slate-900 hover:bg-blue-600 text-white font-bold py-5 rounded-2xl shadow-xl shadow-blue-200 transition-all active:scale-95 flex items-center justify-center gap-3 group"
-              >
-                Run Simulation
-                <ChevronRight className="group-hover:translate-x-1 transition-transform" />
-              </button>
-            </div>
-            
-            <div className="bg-white/80 backdrop-blur-xl rounded-[2rem] p-8 shadow-sm border border-white">
-              <h2 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-2">
-                <Info size={14}/> Advanced Variables
-              </h2>
-              <div className="space-y-6">
-                <InputGroup label="Returns (Pre-Retire)" value={advanced.preRetirementReturn} suffix="%" onChange={(val) => handleAdvancedChange('preRetirementReturn', val)} />
-                <InputGroup label="Inflation Rate" value={inputs.inflationRate} suffix="%" onChange={(val) => handleInputChange('inflationRate', val)} />
-              </div>
-            </div>
-          </aside>
-
-          {/* Visualization Panel */}
-          <main id="results-section" className="lg:col-span-8">
-            {!showResults ? (
-              <div className="h-full min-h-[500px] bg-white rounded-[2rem] border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-center p-12">
-                <div className="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center mb-6 animate-pulse">
-                  <Calculator size={40} className="text-blue-500" />
+      {/* Popup Overlay - From */}
+      {showPopup && calculations && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none px-4">
+          <div className="animate-in zoom-in-95 duration-300 pointer-events-auto">
+            {calculations.gap <= 0 ? (
+              <div className="bg-white rounded-[2.5rem] shadow-2xl p-8 max-w-sm text-center border-4 border-emerald-500">
+                <div className="text-7xl mb-4 animate-bounce">🎉</div>
+                <h2 className="text-2xl font-black text-emerald-600 mb-2">Congratulations!</h2>
+                <p className="text-slate-600">You're on track for a comfortable retirement!</p>
+                <div className="mt-4 py-2 px-4 bg-emerald-50 rounded-full inline-block text-emerald-700 font-bold">
+                  Success Rate: {calculations.successRate}% ✨
                 </div>
-                <h2 className="text-2xl font-bold text-slate-800">Simulation Pending</h2>
-                <p className="text-slate-500 mt-2 max-w-xs">Adjust your parameters and click "Run Simulation" to visualize your financial future.</p>
               </div>
             ) : (
-              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                {/* Hero Stats */}
-                <div className="grid md:grid-cols-3 gap-4">
-                  {[
-                    { label: 'Projected Corpus', val: (calculations.totalCorpus / 10000000).toFixed(2) + ' Cr', color: 'text-slate-900' },
-                    { label: 'Required Target', val: (calculations.requiredCorpus / 10000000).toFixed(2) + ' Cr', color: 'text-slate-900' },
-                    { label: 'Plan Health', val: calculations.gap <= 0 ? 'Optimal' : 'Gap Exists', color: getStatusColor() }
-                  ].map((stat, i) => (
-                    <div key={i} className="bg-white p-6 rounded-[1.5rem] shadow-sm border border-slate-100">
-                      <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">{stat.label}</p>
-                      <p className={`text-2xl font-black ${stat.color}`}>{stat.val}</p>
-                    </div>
-                  ))}
+              <div className="bg-white rounded-[2.5rem] shadow-2xl p-8 max-w-sm text-center border-4 border-amber-500">
+                <div className="text-7xl mb-4 animate-bounce">😟</div>
+                <h2 className="text-2xl font-black text-amber-600 mb-2">Action Required!</h2>
+                <p className="text-slate-600">You have a shortfall of</p>
+                <div className="text-3xl font-black text-rose-600 my-2">
+                  ₹{(Math.abs(calculations.gap) / 10000000).toFixed(2)} Cr
+                </div>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Check recommendations below 👇</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-8 py-10">
+        {/* Header - From */}
+        <div className="text-center mb-12">
+          <span className="inline-block px-4 py-1.5 bg-blue-100 text-blue-700 rounded-full text-xs font-bold uppercase tracking-widest mb-4">Financial Dashboard</span>
+          <h1 className="text-4xl md:text-6xl font-black tracking-tight text-slate-900 mb-4">Retirement <span className="text-blue-600">Planner</span></h1>
+          <p className="text-slate-500 text-lg max-w-2xl mx-auto italic">Advanced calculator with inflation scenarios & Monte Carlo simulation</p>
+        </div>
+
+        <div className="grid lg:grid-cols-12 gap-8">
+          {/* Input Sidebar */}
+          <div className="lg:col-span-4 space-y-6">
+            {/* Basic Details Section */}
+            <section className="bg-white/80 backdrop-blur-xl rounded-[2rem] shadow-sm border border-white p-8">
+              <div className="flex items-center gap-3 mb-8">
+                <div className="p-2 bg-blue-600 rounded-xl text-white shadow-lg shadow-blue-200"><Target size={20} /></div>
+                <h2 className="text-xl font-bold tracking-tight">Basic Details</h2>
+              </div>
+              
+              <div className="space-y-5">
+                {[
+                  { label: "Current Age", key: "currentAge", type: "number" },
+                  { label: "Retirement Age", key: "retirementAge", type: "number" },
+                  { label: "Life Expectancy", key: "lifeExpectancy", type: "number" },
+                  { label: "Current Savings (₹)", key: "currentSavings", type: "number" },
+                  { label: "Monthly SIP (₹)", key: "monthlyContribution", type: "number" },
+                  { label: "Monthly Expenses Today (₹)", key: "monthlyExpenseToday", type: "number" },
+                  { label: "General Inflation (%)", key: "inflationRate", type: "number", step: "0.5" },
+                  { label: "Expense Inflation (%)", key: "expenseInflation", type: "number", step: "0.5" },
+                ].map((field) => (
+                  <div key={field.key} className="group">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5 block ml-1">{field.label}</label>
+                    <input
+                      type={field.type}
+                      step={field.step}
+                      value={inputs[field.key]}
+                      onChange={(e) => handleInputChange(field.key, e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-slate-700 font-bold focus:ring-4 focus:ring-blue-100 focus:bg-white transition-all outline-none"
+                    />
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            {/* Advanced Settings Section - Restored from */}
+            <section className="bg-white/80 backdrop-blur-xl rounded-[2rem] shadow-sm border border-white p-8">
+              <div className="flex items-center gap-3 mb-8">
+                <div className="p-2 bg-slate-900 rounded-xl text-white"><Percent size={20} /></div>
+                <h2 className="text-xl font-bold tracking-tight">Advanced Settings</h2>
+              </div>
+              
+              <div className="space-y-5">
+                {[
+                  { label: "Pre-Retirement Return (%)", key: "preRetirementReturn", type: "number", target: "advanced" },
+                  { label: "Post-Retirement Return (%)", key: "postRetirementReturn", type: "number", target: "advanced" },
+                  { label: "Monthly Medical Expenses (₹)", key: "medicalExpenses", type: "number", target: "advanced" },
+                  { label: "Medical Inflation (%)", key: "medicalInflation", type: "number", target: "advanced" },
+                  { label: "Emergency Fund (Years)", key: "emergencyYears", type: "number", target: "advanced" },
+                ].map((field) => (
+                  <div key={field.key}>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5 block ml-1">{field.label}</label>
+                    <input
+                      type="number"
+                      value={advanced[field.key]}
+                      onChange={(e) => handleAdvancedChange(field.key, e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-slate-700 font-bold focus:ring-4 focus:ring-blue-100 transition-all outline-none"
+                    />
+                  </div>
+                ))}
+
+                <div>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5 block ml-1">Lifestyle Adjustment</label>
+                  <select
+                    value={advanced.lifestyleChange}
+                    onChange={(e) => handleAdvancedChange('lifestyleChange', e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-slate-700 font-bold focus:ring-4 focus:ring-blue-100 outline-none appearance-none"
+                  >
+                    <option value="0.6">60% - Minimal lifestyle</option>
+                    <option value="0.7">70% - Reduced expenses</option>
+                    <option value="0.8">80% - Comfortable</option>
+                    <option value="0.9">90% - Similar lifestyle</option>
+                    <option value="1.0">100% - Same as today</option>
+                    <option value="1.2">120% - Enhanced lifestyle</option>
+                  </select>
+                </div>
+              </div>
+            </section>
+
+            <button
+              onClick={calculateRetirement}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-5 rounded-[2rem] shadow-2xl shadow-blue-200 transition-all active:scale-95 flex items-center justify-center gap-3 group text-lg"
+            >
+              <Calculator size={24} />
+              Calculate My Plan
+              <ChevronRight className="group-hover:translate-x-1 transition-transform" />
+            </button>
+          </div>
+
+          {/* Results Main Area */}
+          <div id="results-section" className="lg:col-span-8 space-y-6">
+            {!showResults ? (
+              <div className="h-full bg-white/50 backdrop-blur-sm rounded-[3rem] border-4 border-dashed border-white flex flex-col items-center justify-center text-center p-12">
+                <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center mb-6 shadow-xl shadow-blue-100">
+                  <TrendingUp size={40} className="text-blue-500 animate-pulse" />
+                </div>
+                <h2 className="text-3xl font-black text-slate-800 mb-3">Ready to Plan Your Future?</h2>
+                <p className="text-slate-500 max-w-sm mb-8">Fill in your details and click "Calculate" to see your professional retirement projection.</p>
+                <div className="flex flex-wrap justify-center gap-4 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  <span className="flex items-center gap-2 px-4 py-2 bg-white rounded-full"><ShieldCheck size={14} className="text-emerald-500"/> Advanced Analytics</span>
+                  <span className="flex items-center gap-2 px-4 py-2 bg-white rounded-full"><ShieldCheck size={14} className="text-blue-500"/> Monte Carlo</span>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-6 duration-700">
+                {/* Status Dashboard Card */}
+                <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 p-8 grid md:grid-cols-3 gap-8">
+                  <div className="text-center md:text-left">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">You'll Have</p>
+                    <p className="text-4xl font-black text-slate-900">₹{(calculations.totalCorpus / 10000000).toFixed(2)}Cr</p>
+                  </div>
+                  <div className="text-center md:text-left border-y md:border-y-0 md:border-x border-slate-100 py-6 md:py-0 md:px-8">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">You'll Need</p>
+                    <p className="text-4xl font-black text-slate-900">₹{(calculations.requiredCorpus / 10000000).toFixed(2)}Cr</p>
+                  </div>
+                  <div className="text-center md:text-left">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Plan Health</p>
+                    <p className={`text-4xl font-black ${getStatusColor()}`}>{getStatusMessage()}</p>
+                    <p className="text-xs font-bold text-slate-400 mt-1">Confidence: {calculations.successRate}%</p>
+                  </div>
                 </div>
 
-                {/* Main Chart */}
-                <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100">
-                  <div className="flex items-center justify-between mb-8">
+                {/* Wealth Chart Card */}
+                <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 p-8">
+                  <div className="flex items-center justify-between mb-10">
                     <h2 className="text-xl font-bold flex items-center gap-2">
-                      <TrendingUp className="text-blue-500" /> Wealth Trajectory
+                      <TrendingUp className="text-blue-500" /> Wealth Projection
                     </h2>
-                    <div className="flex gap-4 text-xs font-bold">
-                      <span className="flex items-center gap-1"><div className="w-3 h-3 bg-blue-500 rounded-full" /> Accumulation</span>
-                      <span className="flex items-center gap-1"><div className="w-3 h-3 bg-rose-400 rounded-full" /> Withdrawal</span>
+                    <div className="flex gap-4 text-[10px] font-black uppercase tracking-widest">
+                      <span className="flex items-center gap-1.5 text-blue-600"><div className="w-2.5 h-2.5 bg-blue-500 rounded-full" /> Growth</span>
+                      <span className="flex items-center gap-1.5 text-rose-500"><div className="w-2.5 h-2.5 bg-rose-400 rounded-full" /> Usage</span>
                     </div>
                   </div>
                   <div className="h-[400px]">
@@ -237,55 +331,82 @@ export default function RetirementCalculator() {
                       <AreaChart data={calculations.chartData}>
                         <defs>
                           <linearGradient id="colorCorpus" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.15}/>
+                            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2}/>
                             <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
                           </linearGradient>
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                        <XAxis dataKey="age" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} dy={10} />
-                        <YAxis tickFormatter={(v) => `₹${(v/10000000).toFixed(1)}Cr`} axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} />
-                        <Tooltip contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'}} />
-                        <Area type="monotone" dataKey="corpus" stroke="#3b82f6" strokeWidth={3} fill="url(#colorCorpus)" />
+                        <XAxis dataKey="age" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 11, fontWeight: 700}} dy={10} />
+                        <YAxis tickFormatter={(v) => `₹${(v/10000000).toFixed(1)}Cr`} axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 11, fontWeight: 700}} />
+                        <Tooltip contentStyle={{borderRadius: '20px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)', padding: '15px'}} />
+                        <Area type="monotone" dataKey="corpus" stroke="#3b82f6" strokeWidth={4} fill="url(#colorCorpus)" />
                       </AreaChart>
                     </ResponsiveContainer>
                   </div>
                 </div>
 
-                {/* Additional Insight Cards (Monte Carlo, etc.) */}
+                {/* Key Insights Grid - From */}
                 <div className="grid md:grid-cols-2 gap-6">
-                  <div className="bg-blue-600 rounded-[2rem] p-8 text-white relative overflow-hidden group">
-                    <div className="absolute right-0 top-0 opacity-10 group-hover:scale-110 transition-transform"><TrendingUp size={160} /></div>
-                    <p className="text-blue-100 font-bold uppercase tracking-widest text-xs mb-2">Simulation Confidence</p>
-                    <h3 className="text-4xl font-black mb-4">{calculations.successRate}%</h3>
-                    <p className="text-blue-100 text-sm leading-relaxed">Based on 1,000 market scenarios, your current plan survives in {calculations.successRate}% of market conditions.</p>
+                  <div className="bg-blue-50 rounded-[2rem] p-8 border border-blue-100">
+                    <div className="flex items-start gap-4">
+                      <div className="p-3 bg-white rounded-2xl text-blue-600 shadow-sm"><DollarSign /></div>
+                      <div>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-blue-400 mb-1">Monthly Cost at Retirement</p>
+                        <p className="text-3xl font-black text-blue-900">₹{(calculations.monthlyExpenseAtRetirement / 1000).toFixed(0)}K</p>
+                        <p className="text-xs font-bold text-blue-600/60 mt-1">{(advanced.lifestyleChange * 100).toFixed(0)}% of current lifestyle</p>
+                      </div>
+                    </div>
                   </div>
-                  
-                  <div className="bg-slate-900 rounded-[2rem] p-8 text-white">
-                    <p className="text-slate-400 font-bold uppercase tracking-widest text-xs mb-2">Retirement Monthly Budget</p>
-                    <h3 className="text-4xl font-black mb-4">₹{(calculations.monthlyExpenseAtRetirement / 1000).toFixed(0)}K</h3>
-                    <p className="text-slate-400 text-sm leading-relaxed">Estimated monthly purchasing power needed to maintain your lifestyle at age {inputs.retirementAge}.</p>
+
+                  <div className="bg-emerald-50 rounded-[2rem] p-8 border border-emerald-100">
+                    <div className="flex items-start gap-4">
+                      <div className="p-3 bg-white rounded-2xl text-emerald-600 shadow-sm"><Calendar /></div>
+                      <div>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-emerald-400 mb-1">Emergency Fund</p>
+                        <p className="text-3xl font-black text-emerald-900">₹{(calculations.emergencyFund / 100000).toFixed(1)}L</p>
+                        <p className="text-xs font-bold text-emerald-600/60 mt-1">{advanced.emergencyYears} years of expenses</p>
+                      </div>
+                    </div>
                   </div>
                 </div>
+
+                {/* Restored Recommendations Section - From */}
+                {calculations.gap > 0 && (
+                  <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 p-8">
+                    <div className="flex items-center gap-3 mb-8">
+                      <div className="p-2 bg-amber-50 rounded-xl text-amber-600"><Info size={20} /></div>
+                      <h2 className="text-xl font-bold">💡 Recommendations</h2>
+                    </div>
+                    <div className="grid gap-4">
+                      <div className="flex items-center gap-5 p-5 bg-blue-50 rounded-3xl border border-blue-100">
+                        <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-black flex-shrink-0">1</div>
+                        <div>
+                          <p className="font-black text-slate-800">Increase Monthly SIP</p>
+                          <p className="text-sm text-slate-500">Raise to ₹{Math.round((inputs.monthlyContribution + (calculations.gap / (calculations.yearsToRetirement * 12))) / 1000)}K/month to bridge the gap</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-5 p-5 bg-emerald-50 rounded-3xl border border-emerald-100">
+                        <div className="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center font-black flex-shrink-0">2</div>
+                        <div>
+                          <p className="font-black text-slate-800">Work More Years</p>
+                          <p className="text-sm text-slate-500">Delay retirement to age {inputs.retirementAge + Math.ceil(calculations.gap / (inputs.monthlyContribution * 12))} to reach goal</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-5 p-5 bg-slate-50 rounded-3xl border border-slate-100">
+                        <div className="w-10 h-10 rounded-full bg-slate-900 text-white flex items-center justify-center font-black flex-shrink-0">3</div>
+                        <div>
+                          <p className="font-black text-slate-800">Adjust Lifestyle</p>
+                          <p className="text-sm text-slate-500">Reduce expenses by {Math.round((1 - (calculations.totalCorpus / calculations.requiredCorpus) * advanced.lifestyleChange) * 100)}% to match corpus</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
-          </main>
-        </div>
-      </div>
-
-      {/* Modern Achievement Popup */}
-      {showPopup && calculations && (
-        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-md animate-in slide-in-from-bottom-8">
-          <div className={`p-1 rounded-3xl ${calculations.gap <= 0 ? 'bg-gradient-to-r from-emerald-400 to-teal-500' : 'bg-gradient-to-r from-amber-400 to-orange-500'} shadow-2xl`}>
-            <div className="bg-white rounded-[1.4rem] p-6 flex items-center gap-4">
-              <div className="text-4xl">{calculations.gap <= 0 ? '🎯' : '⚠️'}</div>
-              <div>
-                <h4 className="font-bold text-slate-900">{calculations.gap <= 0 ? 'Plan Validated!' : 'Gap Detected'}</h4>
-                <p className="text-slate-500 text-sm">{calculations.gap <= 0 ? "You're financially bulletproof." : `Shortfall of ₹${(Math.abs(calculations.gap) / 10000000).toFixed(2)} Cr.`}</p>
-              </div>
-            </div>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }
