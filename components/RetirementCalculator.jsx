@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Area, AreaChart } from 'recharts';
-import { TrendingUp, AlertCircle, DollarSign, Calendar, Percent, Target, Calculator, ChevronRight, Info, ShieldCheck } from 'lucide-react';
+import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
+import { TrendingUp, DollarSign, Calendar, Percent, Target, Calculator, ChevronRight, Info, ShieldCheck } from 'lucide-react';
 
 export default function RetirementCalculator() {
   const [inputs, setInputs] = useState({
@@ -38,7 +38,13 @@ export default function RetirementCalculator() {
     setAdvanced(prev => ({ ...prev, [field]: parseFloat(value) || 0 }));
   };
 
-  // Original Logic Preserved from
+  // Helper to format large numbers for the chart and tooltips
+  const formatCorpus = (value) => {
+    if (value >= 10000000) return `${(value / 10000000).toFixed(2)} Cr`;
+    if (value >= 100000) return `${(value / 100000).toFixed(2)} L`;
+    return `₹${value.toLocaleString()}`;
+  };
+
   const calculateRetirement = () => {
     const yearsToRetirement = inputs.retirementAge - inputs.currentAge;
     const yearsInRetirement = inputs.lifeExpectancy - inputs.retirementAge;
@@ -53,14 +59,12 @@ export default function RetirementCalculator() {
     const totalCorpus = fvCurrentSavings + fvContributions;
     
     const inflatedMonthlyExpense = inputs.monthlyExpenseToday * Math.pow(1 + inputs.expenseInflation / 100, yearsToRetirement) * advanced.lifestyleChange;
-    
     const inflatedMedicalExpense = advanced.medicalExpenses * Math.pow(1 + advanced.medicalInflation / 100, yearsToRetirement);
     
     const totalMonthlyExpense = inflatedMonthlyExpense + inflatedMedicalExpense / 12;
     const annualExpense = totalMonthlyExpense * 12;
     
-    const realReturn = ((1 + advanced.postRetirementReturn / 100) / 
-      (1 + inputs.inflationRate / 100)) - 1;
+    const realReturn = ((1 + advanced.postRetirementReturn / 100) / (1 + inputs.inflationRate / 100)) - 1;
     
     const requiredCorpus = annualExpense * ((1 - Math.pow(1 + realReturn, -yearsInRetirement)) / realReturn);
     
@@ -80,18 +84,15 @@ export default function RetirementCalculator() {
         chartData.push({
           age,
           corpus: Math.round(currentCorpus),
-          withdrawal: 0,
           phase: 'Accumulation'
         });
       } else {
         const yearExpense = annualExpense * Math.pow(1 + inputs.inflationRate / 100, age - inputs.retirementAge);
-        
         currentCorpus = currentCorpus * (1 + advanced.postRetirementReturn / 100) - yearExpense;
         
         chartData.push({
           age,
           corpus: Math.round(Math.max(0, currentCorpus)),
-          withdrawal: Math.round(yearExpense),
           phase: 'Withdrawal'
         });
       }
@@ -157,7 +158,7 @@ export default function RetirementCalculator() {
         <div className="absolute top-[20%] -right-[5%] w-[30%] h-[30%] rounded-full bg-indigo-200 blur-[100px]" />
       </div>
 
-      {/* Popup Overlay - From */}
+      {/* Popup Overlay */}
       {showPopup && calculations && (
         <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none px-4">
           <div className="animate-in zoom-in-95 duration-300 pointer-events-auto">
@@ -186,7 +187,6 @@ export default function RetirementCalculator() {
       )}
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-8 py-10">
-        {/* Header - From */}
         <div className="text-center mb-12">
           <span className="inline-block px-4 py-1.5 bg-blue-100 text-blue-700 rounded-full text-xs font-bold uppercase tracking-widest mb-4">Financial Dashboard</span>
           <h1 className="text-4xl md:text-6xl font-black tracking-tight text-slate-900 mb-4">Retirement <span className="text-blue-600">Planner</span></h1>
@@ -196,7 +196,6 @@ export default function RetirementCalculator() {
         <div className="grid lg:grid-cols-12 gap-8">
           {/* Input Sidebar */}
           <div className="lg:col-span-4 space-y-6">
-            {/* Basic Details Section */}
             <section className="bg-white/80 backdrop-blur-xl rounded-[2rem] shadow-sm border border-white p-8">
               <div className="flex items-center gap-3 mb-8">
                 <div className="p-2 bg-blue-600 rounded-xl text-white shadow-lg shadow-blue-200"><Target size={20} /></div>
@@ -228,7 +227,6 @@ export default function RetirementCalculator() {
               </div>
             </section>
 
-            {/* Advanced Settings Section - Restored from */}
             <section className="bg-white/80 backdrop-blur-xl rounded-[2rem] shadow-sm border border-white p-8">
               <div className="flex items-center gap-3 mb-8">
                 <div className="p-2 bg-slate-900 rounded-xl text-white"><Percent size={20} /></div>
@@ -237,11 +235,11 @@ export default function RetirementCalculator() {
               
               <div className="space-y-5">
                 {[
-                  { label: "Pre-Retirement Return (%)", key: "preRetirementReturn", type: "number", target: "advanced" },
-                  { label: "Post-Retirement Return (%)", key: "postRetirementReturn", type: "number", target: "advanced" },
-                  { label: "Monthly Medical Expenses (₹)", key: "medicalExpenses", type: "number", target: "advanced" },
-                  { label: "Medical Inflation (%)", key: "medicalInflation", type: "number", target: "advanced" },
-                  { label: "Emergency Fund (Years)", key: "emergencyYears", type: "number", target: "advanced" },
+                  { label: "Pre-Retirement Return (%)", key: "preRetirementReturn", type: "number" },
+                  { label: "Post-Retirement Return (%)", key: "postRetirementReturn", type: "number" },
+                  { label: "Monthly Medical Expenses (₹)", key: "medicalExpenses", type: "number" },
+                  { label: "Medical Inflation (%)", key: "medicalInflation", type: "number" },
+                  { label: "Emergency Fund (Years)", key: "emergencyYears", type: "number" },
                 ].map((field) => (
                   <div key={field.key}>
                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5 block ml-1">{field.label}</label>
@@ -282,7 +280,7 @@ export default function RetirementCalculator() {
             </button>
           </div>
 
-          {/* Results Main Area */}
+          {/* Results Area */}
           <div id="results-section" className="lg:col-span-8 space-y-6">
             {!showResults ? (
               <div className="h-full bg-white/50 backdrop-blur-sm rounded-[3rem] border-4 border-dashed border-white flex flex-col items-center justify-center text-center p-12">
@@ -291,22 +289,17 @@ export default function RetirementCalculator() {
                 </div>
                 <h2 className="text-3xl font-black text-slate-800 mb-3">Ready to Plan Your Future?</h2>
                 <p className="text-slate-500 max-w-sm mb-8">Fill in your details and click "Calculate" to see your professional retirement projection.</p>
-                <div className="flex flex-wrap justify-center gap-4 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                  <span className="flex items-center gap-2 px-4 py-2 bg-white rounded-full"><ShieldCheck size={14} className="text-emerald-500"/> Advanced Analytics</span>
-                  <span className="flex items-center gap-2 px-4 py-2 bg-white rounded-full"><ShieldCheck size={14} className="text-blue-500"/> Monte Carlo</span>
-                </div>
               </div>
             ) : (
               <div className="space-y-6 animate-in fade-in slide-in-from-bottom-6 duration-700">
-                {/* Status Dashboard Card */}
                 <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 p-8 grid md:grid-cols-3 gap-8">
                   <div className="text-center md:text-left">
                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">You'll Have</p>
-                    <p className="text-4xl font-black text-slate-900">₹{(calculations.totalCorpus / 10000000).toFixed(2)}Cr</p>
+                    <p className="text-4xl font-black text-slate-900">{formatCorpus(calculations.totalCorpus)}</p>
                   </div>
                   <div className="text-center md:text-left border-y md:border-y-0 md:border-x border-slate-100 py-6 md:py-0 md:px-8">
                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">You'll Need</p>
-                    <p className="text-4xl font-black text-slate-900">₹{(calculations.requiredCorpus / 10000000).toFixed(2)}Cr</p>
+                    <p className="text-4xl font-black text-slate-900">{formatCorpus(calculations.requiredCorpus)}</p>
                   </div>
                   <div className="text-center md:text-left">
                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Plan Health</p>
@@ -315,16 +308,12 @@ export default function RetirementCalculator() {
                   </div>
                 </div>
 
-                {/* Wealth Chart Card */}
+                {/* Wealth Chart Card FIXED */}
                 <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 p-8">
                   <div className="flex items-center justify-between mb-10">
                     <h2 className="text-xl font-bold flex items-center gap-2">
                       <TrendingUp className="text-blue-500" /> Wealth Projection
                     </h2>
-                    <div className="flex gap-4 text-[10px] font-black uppercase tracking-widest">
-                      <span className="flex items-center gap-1.5 text-blue-600"><div className="w-2.5 h-2.5 bg-blue-500 rounded-full" /> Growth</span>
-                      <span className="flex items-center gap-1.5 text-rose-500"><div className="w-2.5 h-2.5 bg-rose-400 rounded-full" /> Usage</span>
-                    </div>
                   </div>
                   <div className="h-[400px]">
                     <ResponsiveContainer width="100%" height="100%">
@@ -336,16 +325,30 @@ export default function RetirementCalculator() {
                           </linearGradient>
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                        <XAxis dataKey="age" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 11, fontWeight: 700}} dy={10} />
-                        <YAxis tickFormatter={(v) => `₹${(v/10000000).toFixed(1)}Cr`} axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 11, fontWeight: 700}} />
-                        <Tooltip contentStyle={{borderRadius: '20px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)', padding: '15px'}} />
+                        <XAxis 
+                          dataKey="age" 
+                          axisLine={false} 
+                          tickLine={false} 
+                          tick={{fill: '#94a3b8', fontSize: 11, fontWeight: 700}} 
+                          dy={10} 
+                        />
+                        <YAxis 
+                          tickFormatter={(v) => `₹${(v/10000000).toFixed(1)}Cr`} 
+                          axisLine={false} 
+                          tickLine={false} 
+                          tick={{fill: '#94a3b8', fontSize: 11, fontWeight: 700}} 
+                        />
+                        <Tooltip 
+                          formatter={(value) => [formatCorpus(value), "Corpus"]}
+                          labelFormatter={(label) => `Age: ${label}`}
+                          contentStyle={{borderRadius: '20px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)', padding: '15px'}} 
+                        />
                         <Area type="monotone" dataKey="corpus" stroke="#3b82f6" strokeWidth={4} fill="url(#colorCorpus)" />
                       </AreaChart>
                     </ResponsiveContainer>
                   </div>
                 </div>
 
-                {/* Key Insights Grid - From */}
                 <div className="grid md:grid-cols-2 gap-6">
                   <div className="bg-blue-50 rounded-[2rem] p-8 border border-blue-100">
                     <div className="flex items-start gap-4">
@@ -353,7 +356,7 @@ export default function RetirementCalculator() {
                       <div>
                         <p className="text-[10px] font-black uppercase tracking-widest text-blue-400 mb-1">Monthly Cost at Retirement</p>
                         <p className="text-3xl font-black text-blue-900">₹{(calculations.monthlyExpenseAtRetirement / 1000).toFixed(0)}K</p>
-                        <p className="text-xs font-bold text-blue-600/60 mt-1">{(advanced.lifestyleChange * 100).toFixed(0)}% of current lifestyle</p>
+                        <p className="text-xs font-bold text-blue-600/60 mt-1">{(advanced.lifestyleChange * 100).toFixed(0)}% lifestyle</p>
                       </div>
                     </div>
                   </div>
@@ -364,13 +367,12 @@ export default function RetirementCalculator() {
                       <div>
                         <p className="text-[10px] font-black uppercase tracking-widest text-emerald-400 mb-1">Emergency Fund</p>
                         <p className="text-3xl font-black text-emerald-900">₹{(calculations.emergencyFund / 100000).toFixed(1)}L</p>
-                        <p className="text-xs font-bold text-emerald-600/60 mt-1">{advanced.emergencyYears} years of expenses</p>
+                        <p className="text-xs font-bold text-emerald-600/60 mt-1">{advanced.emergencyYears} years of buffer</p>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Restored Recommendations Section - From */}
                 {calculations.gap > 0 && (
                   <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 p-8">
                     <div className="flex items-center gap-3 mb-8">
@@ -382,21 +384,14 @@ export default function RetirementCalculator() {
                         <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-black flex-shrink-0">1</div>
                         <div>
                           <p className="font-black text-slate-800">Increase Monthly SIP</p>
-                          <p className="text-sm text-slate-500">Raise to ₹{Math.round((inputs.monthlyContribution + (calculations.gap / (calculations.yearsToRetirement * 12))) / 1000)}K/month to bridge the gap</p>
+                          <p className="text-sm text-slate-500">Raise to ₹{Math.round((inputs.monthlyContribution + (calculations.gap / (calculations.yearsToRetirement * 12))) / 1000)}K/month</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-5 p-5 bg-emerald-50 rounded-3xl border border-emerald-100">
                         <div className="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center font-black flex-shrink-0">2</div>
                         <div>
                           <p className="font-black text-slate-800">Work More Years</p>
-                          <p className="text-sm text-slate-500">Delay retirement to age {inputs.retirementAge + Math.ceil(calculations.gap / (inputs.monthlyContribution * 12))} to reach goal</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-5 p-5 bg-slate-50 rounded-3xl border border-slate-100">
-                        <div className="w-10 h-10 rounded-full bg-slate-900 text-white flex items-center justify-center font-black flex-shrink-0">3</div>
-                        <div>
-                          <p className="font-black text-slate-800">Adjust Lifestyle</p>
-                          <p className="text-sm text-slate-500">Reduce expenses by {Math.round((1 - (calculations.totalCorpus / calculations.requiredCorpus) * advanced.lifestyleChange) * 100)}% to match corpus</p>
+                          <p className="text-sm text-slate-500">Target retirement by age {Math.min(75, inputs.retirementAge + Math.ceil(calculations.gap / (inputs.monthlyContribution * 12 * 5)))}</p>
                         </div>
                       </div>
                     </div>
@@ -408,5 +403,11 @@ export default function RetirementCalculator() {
         </div>
       </div>
     </div>
+  );
+}
+
+function ChevronRight(props) {
+  return (
+    <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
   );
 }
