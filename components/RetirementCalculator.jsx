@@ -59,15 +59,12 @@ export default function RetirementCalculator() {
     const totalCorpus = fvCurrentSavings + fvContributions;
     
     const inflatedMonthlyExpense = inputs.monthlyExpenseToday * Math.pow(1 + inputs.expenseInflation / 100, yearsToRetirement) * advanced.lifestyleChange;
-    
     const inflatedMedicalExpense = advanced.medicalExpenses * Math.pow(1 + advanced.medicalInflation / 100, yearsToRetirement);
     
     const totalMonthlyExpense = inflatedMonthlyExpense + inflatedMedicalExpense / 12;
     const annualExpense = totalMonthlyExpense * 12;
     
-    const realReturn = ((1 + advanced.postRetirementReturn / 100) / 
-      (1 + inputs.inflationRate / 100)) - 1;
-    
+    const realReturn = ((1 + advanced.postRetirementReturn / 100) / (1 + inputs.inflationRate / 100)) - 1;
     const requiredCorpus = annualExpense * ((1 - Math.pow(1 + realReturn, -yearsInRetirement)) / realReturn);
     
     const emergencyFund = annualExpense * advanced.emergencyYears;
@@ -82,13 +79,11 @@ export default function RetirementCalculator() {
       if (age < inputs.retirementAge) {
         const yearlyContribution = inputs.monthlyContribution * 12;
         currentCorpus = (currentCorpus + yearlyContribution) * (1 + advanced.preRetirementReturn / 100);
-        
-        chartData.push({ age, corpus: Math.round(currentCorpus), phase: 'Accumulation' });
+        chartData.push({ age, corpus: Math.round(currentCorpus) });
       } else {
         const yearExpense = annualExpense * Math.pow(1 + inputs.inflationRate / 100, age - inputs.retirementAge);
         currentCorpus = currentCorpus * (1 + advanced.postRetirementReturn / 100) - yearExpense;
-        
-        chartData.push({ age, corpus: Math.round(Math.max(0, currentCorpus)), phase: 'Withdrawal' });
+        chartData.push({ age, corpus: Math.round(Math.max(0, currentCorpus)) });
       }
     }
     
@@ -133,7 +128,6 @@ export default function RetirementCalculator() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-20">
-      {/* Popups and Background Ornaments */}
       {showPopup && calculations && (
         <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none px-4">
           <div className="animate-in zoom-in-95 duration-300 pointer-events-auto bg-white rounded-[2.5rem] shadow-2xl p-8 max-w-sm text-center border-4 border-slate-100">
@@ -141,13 +135,13 @@ export default function RetirementCalculator() {
               <>
                 <div className="text-7xl mb-4 animate-bounce">🎉</div>
                 <h2 className="text-2xl font-black text-emerald-600 mb-2">Congratulations!</h2>
-                <p className="text-slate-600">On track for retirement! Success: {calculations.successRate}%</p>
+                <p className="text-slate-600">On track for retirement!</p>
               </>
             ) : (
               <>
                 <div className="text-7xl mb-4 animate-bounce">😟</div>
                 <h2 className="text-2xl font-black text-amber-600 mb-2">Action Required!</h2>
-                <p className="text-slate-600">Shortfall of {formatValue(Math.abs(calculations.gap))}</p>
+                <p className="text-slate-600">Shortfall detected.</p>
               </>
             )}
           </div>
@@ -159,90 +153,96 @@ export default function RetirementCalculator() {
           <h1 className="text-4xl md:text-6xl font-black tracking-tight text-slate-900 mb-4">Retirement <span className="text-blue-600">Planner</span></h1>
         </div>
 
-        {/* Inputs Centered */}
-        <div className={`transition-all duration-500 ${showResults ? 'max-w-7xl' : 'max-w-3xl mx-auto'}`}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div className="grid lg:grid-cols-12 gap-8">
+          <div className="lg:col-span-4 space-y-6">
             <section className="bg-white rounded-[2rem] shadow-sm border p-8 space-y-5">
               <h2 className="text-xl font-bold flex items-center gap-2"><Target className="text-blue-600" /> Basic Details</h2>
               {['currentAge', 'retirementAge', 'lifeExpectancy', 'currentSavings', 'monthlyContribution', 'monthlyExpenseToday', 'inflationRate', 'expenseInflation'].map(key => (
                 <div key={key}>
-                  <label className="text-[10px] font-black uppercase text-slate-400 block mb-1 ml-1">{key.replace(/([A-Z])/g, ' $1')}</label>
+                  <label className="text-[10px] font-black uppercase text-slate-400 block mb-1 ml-1">{key}</label>
                   <input type="number" value={inputs[key]} onChange={(e) => handleInputChange(key, e.target.value)} className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 font-bold text-slate-700 outline-none focus:ring-4 focus:ring-blue-100" />
                 </div>
               ))}
             </section>
 
             <section className="bg-white rounded-[2rem] shadow-sm border p-8 space-y-5">
-              <h2 className="text-xl font-bold flex items-center gap-2"><Percent className="text-slate-900" /> Advanced Settings</h2>
+              <h2 className="text-xl font-bold flex items-center gap-2"><Percent className="text-slate-900" /> Advanced</h2>
               {['preRetirementReturn', 'postRetirementReturn', 'medicalExpenses', 'medicalInflation', 'emergencyYears'].map(key => (
                 <div key={key}>
-                  <label className="text-[10px] font-black uppercase text-slate-400 block mb-1 ml-1">{key.replace(/([A-Z])/g, ' $1')}</label>
+                  <label className="text-[10px] font-black uppercase text-slate-400 block mb-1 ml-1">{key}</label>
                   <input type="number" value={advanced[key]} onChange={(e) => handleAdvancedChange(key, e.target.value)} className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 font-bold text-slate-700 outline-none focus:ring-4 focus:ring-blue-100" />
                 </div>
               ))}
             </section>
+
+            <button onClick={calculateRetirement} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-5 rounded-[2rem] shadow-2xl flex items-center justify-center gap-3 transition-all active:scale-95"><Calculator size={24} /> Calculate</button>
           </div>
 
-          <div className="flex justify-center mb-16">
-            <button onClick={calculateRetirement} className="bg-blue-600 hover:bg-blue-700 text-white font-black py-5 px-10 rounded-[2rem] shadow-2xl shadow-blue-200 flex items-center gap-3 active:scale-95 transition-all"><Calculator size={24} /> Calculate My Plan</button>
+          <div id="results-section" className="lg:col-span-8 space-y-6">
+            {showResults && calculations ? (
+              <>
+                <div className="bg-white rounded-[2.5rem] shadow-sm border p-8 grid md:grid-cols-3 gap-8">
+                   <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Target Corpus</p><p className="text-3xl font-black">{formatValue(calculations.requiredCorpus)}</p></div>
+                   <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Status</p><p className={`text-3xl font-black ${getStatusColor()}`}>{calculations.gap <= 0 ? 'Optimal' : 'Shortfall'}</p></div>
+                   <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Success Rate</p><p className="text-3xl font-black text-blue-600">{calculations.successRate}%</p></div>
+                </div>
+
+                {/* --- FIXED CHART SECTION --- */}
+                <div className="bg-white rounded-[2.5rem] shadow-sm border p-8">
+                  <h2 className="text-xl font-bold mb-10 flex items-center gap-2"><TrendingUp className="text-blue-500" /> Wealth Projection</h2>
+                  <div className="h-[400px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={calculations.chartData}>
+                        <defs>
+                          <linearGradient id="colorCorpus" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2}/>
+                            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                        <XAxis 
+                          dataKey="age" 
+                          axisLine={false} 
+                          tickLine={false} 
+                          tick={{fill: '#94a3b8', fontSize: 11, fontWeight: 700}} 
+                          dy={10} 
+                        />
+                        <YAxis 
+                          tickFormatter={(v) => formatValue(v)} 
+                          axisLine={false} 
+                          tickLine={false} 
+                          tick={{fill: '#94a3b8', fontSize: 11, fontWeight: 700}} 
+                        />
+                        <Tooltip 
+                          formatter={(v) => [formatValue(v), "Corpus"]} 
+                          labelFormatter={(l) => `Age: ${l}`} 
+                          contentStyle={{borderRadius: '20px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)', padding: '15px'}} 
+                        />
+                        <Area type="monotone" dataKey="corpus" stroke="#3b82f6" strokeWidth={4} fill="url(#colorCorpus)" />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+                {/* --- END CHART SECTION --- */}
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="bg-blue-50 rounded-[2rem] p-8 border border-blue-100">
+                    <p className="text-[10px] font-black uppercase text-blue-400 mb-1">Monthly Cost at Retirement</p>
+                    <p className="text-3xl font-black text-blue-900">₹{(calculations.monthlyExpenseAtRetirement / 1000).toFixed(0)}K</p>
+                  </div>
+                  <div className="bg-emerald-50 rounded-[2rem] p-8 border border-emerald-100">
+                    <p className="text-[10px] font-black uppercase text-emerald-400 mb-1">Emergency Fund</p>
+                    <p className="text-3xl font-black text-emerald-900">₹{(calculations.emergencyFund / 100000).toFixed(1)}L</p>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="h-full bg-white/50 backdrop-blur-sm rounded-[3rem] border-4 border-dashed border-white flex flex-col items-center justify-center text-center p-12">
+                <h2 className="text-3xl font-black text-slate-800 mb-3">Ready to Plan?</h2>
+              </div>
+            )}
           </div>
         </div>
-
-        {/* Results side-by-side */}
-        {showResults && calculations && (
-          <div id="results-section" className="grid lg:grid-cols-2 gap-8 animate-in fade-in slide-in-from-bottom-6 duration-700">
-            {/* Wealth Chart Card Fixed */}
-            <div className="bg-white rounded-[2.5rem] shadow-sm border p-8">
-              <h2 className="text-xl font-bold mb-10 flex items-center gap-2"><TrendingUp className="text-blue-500" /> Wealth Projection</h2>
-              <div className="h-[400px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={calculations.chartData}>
-                    <defs>
-                      <linearGradient id="colorCorpus" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2}/>
-                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                    <XAxis dataKey="age" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 11, fontWeight: 700}} dy={10} />
-                    <YAxis tickFormatter={(v) => formatValue(v)} axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 11, fontWeight: 700}} />
-                    <Tooltip 
-                      formatter={(v) => [formatValue(v), "Corpus"]} 
-                      labelFormatter={(l) => `Age: ${l}`} 
-                      contentStyle={{borderRadius: '20px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)', padding: '15px'}} 
-                    />
-                    <Area type="monotone" dataKey="corpus" stroke="#3b82f6" strokeWidth={4} fill="url(#colorCorpus)" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
-            <div className="space-y-6">
-              <div className="bg-white rounded-[2.5rem] shadow-sm border p-8 grid grid-cols-2 gap-8">
-                <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Target Corpus</p><p className="text-3xl font-black">{formatValue(calculations.requiredCorpus)}</p></div>
-                <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Status</p><p className={`text-3xl font-black ${getStatusColor()}`}>{calculations.gap <= 0 ? 'Optimal' : 'Shortfall'}</p></div>
-              </div>
-
-              {/* Suggestions Fixed */}
-              <div className="bg-white rounded-[2.5rem] shadow-sm border p-8 space-y-6">
-                <h2 className="text-xl font-bold">💡 Recommendations</h2>
-                {calculations.gap > 0 ? (
-                  <div className="space-y-4">
-                    <div className="p-5 bg-blue-50 rounded-3xl border border-blue-100 flex gap-4">
-                      <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-black flex-shrink-0">1</div>
-                      <div><p className="font-black text-slate-800">Increase SIP</p><p className="text-sm text-slate-500">Add ₹{Math.ceil(calculations.gap / (inputs.retirementAge - inputs.currentAge) / 120)} to your SIP.</p></div>
-                    </div>
-                    {/* Realistic Age Logic */}
-                    <div className="p-5 bg-emerald-50 rounded-3xl border border-emerald-100 flex gap-4">
-                      <div className="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center font-black flex-shrink-0">2</div>
-                      <div><p className="font-black text-slate-800">Review Timeline</p><p className="text-sm text-slate-500">{inputs.retirementAge + 5 < 80 ? `Delay retirement to age ${inputs.retirementAge + 5} to bridge part of the gap.` : 'Consider targeting a higher return or reducing lifestyle expenses.'}</p></div>
-                    </div>
-                  </div>
-                ) : <p className="text-emerald-600 font-bold">Perfect plan! You are set for retirement.</p>}
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
